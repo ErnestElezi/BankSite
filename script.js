@@ -70,27 +70,135 @@ document.querySelectorAll('.step-checkbox').forEach(checkbox => {
 
 // Simple Game Canvas
 const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+const c = canvas.getContext('2d');
+
+console.log(canvas.offsetTop);
+
+let offsets = canvas.getClientRects()[0]
+console.log(offsets);
+
+
+function handdleTouchEvent(event) {
+    let x , y;
+
+    switch (event.type) {
+        case "touchstart":
+            input.touch_down = true;
+    input.touch_change = true;
+            break;
+        case "touchend":
+            input.touch_down = false;
+    input.touch_change = true;
+            break;
+    }
+
+      let touch = event.changedTouches[0];
+      x = touch.clientX + offsets.x;
+      y = touch.clientY - offsets.y
+
+    input.touch = {x:x,y:y}
+    
+}
+
+addEventListener("touchstart", handdleTouchEvent)
+
+addEventListener("touchmove", handdleTouchEvent)
+
+addEventListener("touchend",handdleTouchEvent)
+
+const input = {
+    touch:{
+        x:0,
+        y:0,
+    },
+    touch_down:false,
+    touch_change : false,
+
+}
 
 // Simple drawing function to show the canvas is ready
+
+class Player{
+    constructor(x,y){
+        this.x = x;
+        this.y = y;
+        this.w = 50;
+        this.h = 80;
+        this.g = 0.5;
+        this.vx = 0;
+        this.vy = 0;
+        this.on_ground = false;
+    }
+
+
+    draw(){
+        c.save();
+        c.fillStyle = this.on_ground ? "red" : "green";
+        c.fillRect(this.x,this.y,this.w,this.h);
+        c.restore();
+    }
+
+    update(){
+
+
+        if (this.y + this.vy + this.h >= canvas.height){
+            this.on_ground = true;
+            this.y = canvas.height - this.h;
+        }else{
+            this.on_ground = false
+        }
+
+        if (!this.on_ground) {
+            this.vy += this.g;
+        }else{
+            this.vy = 0;
+        }
+
+        if (this.on_ground && input.touch_down && input.touch_change) {
+            this.vy = -20;
+            console.log(player);
+            
+        }
+
+
+        this.x += this.vx;
+        this.y += this.vy;
+
+    }
+
+}
+
+const player = new Player(100,100);
+
 function drawGame() {
-    ctx.fillStyle = '#f9f9f9';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    requestAnimationFrame(drawGame)
     
+    if (!document.getElementById("game").classList.contains('active')) {
+        return;
+    }
+
+    c.fillStyle = '#f9f9f9';
+    c.fillRect(0, 0, canvas.width, canvas.height);
+
+
+    c.beginPath()
+    c.strokeStyle = input.touch_down ? "red" : "blue";
+    c.arc(input.touch.x, input.touch.y,20,0,Math.PI*2,false);
+    c.stroke()
+    c.closePath();
+        
+    
+    player.draw();
+    player.update();
+
+
+
     // Draw border
-    ctx.strokeStyle = '#ddd';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(0, 0, canvas.width, canvas.height);
+    c.strokeStyle = '#ddd';
+    c.lineWidth = 2;
+    c.strokeRect(0, 0, canvas.width, canvas.height);
 
-    // Draw welcome message
-    ctx.fillStyle = '#FFA500';
-    ctx.font = 'bold 24px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('🎮 Game Area', canvas.width / 2, 50);
-
-    ctx.font = '14px Arial';
-    ctx.fillStyle = '#999';
-    ctx.fillText('Canvas ready for game implementation', canvas.width / 2, canvas.height / 2);
+    input.touch_change = false;
 }
 
 drawGame();
