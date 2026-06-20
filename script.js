@@ -60,6 +60,8 @@ const input = {
 function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
 }
+let spikeList = [];
+
 
 let platforms = [
     { x: canvas.width / 2 - 50, y: canvas.height - 20, w: 100, h: 14 },
@@ -134,6 +136,14 @@ function initGame() {
     platforms = initialPlatformState.map(platform => ({ ...platform }));
     resetPlatforms();
 
+    spikeList = [];
+    spikeList.push({
+        x: Math.random() * (canvas.width - 30),
+        y: Math.random() * (canvas.height - 100),
+        w: 30,
+        h: 30,
+    });
+
     player.x = canvas.width / 2 - player.w / 2;
     player.y = canvas.height - 80;
     player.vx = 0;
@@ -143,7 +153,7 @@ function initGame() {
 }
 
 function updateCamera(player) {
-    const bottomQuarterLine = canvas.height * 0.60;
+    const bottomQuarterLine = canvas.height * 0.40;
     cameraOffsetY = Math.min(cameraOffsetY, player.y - bottomQuarterLine);
 }
 
@@ -300,6 +310,43 @@ function drawGame() {
         c.strokeRect(platform.x, platform.y - cameraOffsetY, platform.w, platform.h);
     }
 
+    for (let spike of spikeList) {
+
+        c.beginPath();
+        c.fillStyle = 'black';
+        c.fillRect(spike.x, spike.y - cameraOffsetY, spike.w, spike.h);
+        c.strokeStyle = 'black';
+        c.strokeRect(spike.x, spike.y - cameraOffsetY, spike.w, spike.h);
+        c.closePath();
+
+        if (spike.y - cameraOffsetY > canvas.height + 30) {
+            spike.y = cameraOffsetY - spike.h - 30 + (Math.random() * 10 - 5);
+            spike.x = Math.random() * (canvas.width - spike.w);
+        }
+
+    if (player.x + player.w > spike.x && player.x < spike.x + spike.w &&
+        player.y + player.h > spike.y && player.y < spike.y + spike.h) {
+        initGame();
+    }
+    }
+
+    let spikeDifficoultyThreshold = -Math.floor((player.y - canvas.height) / (canvas.height*2))/5;
+    c.fillStyle = 'rgba(0,0,0,0.5)';
+    c.fillText(`Difficulty: ${spikeDifficoultyThreshold}`, 20, 60);
+
+    if (spikeDifficoultyThreshold > spikeList.length) {
+        spikeList.push({
+            x: Math.random() * (canvas.width - 30),
+            y: cameraOffsetY - canvas.height - 30 + (Math.random() * 20 - 10),
+            w: 30,
+            h: 30,
+        });
+        console.log("Added spike, total: " + spikeList.length);
+    }
+
+
+
+
     c.beginPath();
     c.strokeStyle = input.pointer_down ? 'red' : 'blue';
     c.arc(input.pointer.x, input.pointer.y, 20, 0, Math.PI * 2, false);
@@ -339,7 +386,6 @@ function drawGame() {
     c.font = '16px Arial';
 
     cameraOffsetY -= difficulty * 0.1;
-    console.log(platforms.length);
     
 }
 
