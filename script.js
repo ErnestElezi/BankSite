@@ -1,4 +1,4 @@
-function showPage(pageId) {
+function showPage(pageId, navItem) {
     // Hide all pages
     document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active');
@@ -13,8 +13,16 @@ function showPage(pageId) {
     document.getElementById(pageId).classList.add('active');
 
     // Add active state to corresponding nav item
-    event.target.closest('.nav-item').classList.add('active');
+    if (navItem) {
+        navItem.classList.add('active');
+    }
 }
+
+document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('pointerup', function() {
+        showPage(this.dataset.page, this);
+    });
+});
 
 // Toggle functionality for settings
 document.querySelectorAll('.toggle').forEach(toggle => {
