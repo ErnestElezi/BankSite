@@ -18,128 +18,25 @@ function showPage(pageId, navItem) {
     }
 }
 
-document.querySelectorAll('.nav-item').forEach(item => {
-    item.addEventListener('pointerup', function() {
-        showPage(this.dataset.page, this);
-    });
-});
-
-// Toggle functionality for settings
-document.querySelectorAll('.toggle').forEach(toggle => {
-    toggle.addEventListener('click', function(e) {
-        e.stopPropagation();
-        this.classList.toggle('active');
-    });
-});
-
-// Handle setting items click
-document.querySelectorAll('.setting-item').forEach(item => {
-    item.addEventListener('click', function() {
-        if (this.querySelector('.toggle')) {
-            this.querySelector('.toggle').click();
-        }
-    });
-});
-
-// Quest panel expansion
-document.querySelectorAll('.quest-panel').forEach(panel => {
-    panel.addEventListener('click', function(e) {
-        // Don't toggle if clicking on checkbox
-        if (e.target.classList.contains('step-checkbox')) {
-            e.stopPropagation();
-            return;
-        }
-        
-        const questSteps = this.querySelector('.quest-steps');
-        const isExpanded = this.classList.contains('expanded');
-        
-        if (isExpanded) {
-            questSteps.style.display = 'none';
-            this.classList.remove('expanded');
-        } else {
-            questSteps.style.display = 'flex';
-            this.classList.add('expanded');
-        }
-    });
-});
-
-// Handle checkbox changes
-document.querySelectorAll('.step-checkbox').forEach(checkbox => {
-    checkbox.addEventListener('change', function(e) {
-        e.stopPropagation();
-        const stepItem = this.parentElement;
-        if (this.checked) {
-            stepItem.style.opacity = '0.6';
-        } else {
-            stepItem.style.opacity = '1';
-        }
-    });
-});
-
 // Simple Game Canvas
 const canvas = document.getElementById('gameCanvas');
 const c = canvas.getContext('2d');
 
-console.log(canvas.offsetTop);
-
-let offsets = canvas.getClientRects()[0]
-console.log(offsets);
-
-
-function handdleTouchEvent(event) {
-    event.preventDefault();
-
-    let x , y;
-
-    let touch = event.changedTouches[0];
-    const bounds = canvas.getBoundingClientRect();
-    x = touch.clientX - bounds.left;
-    y = touch.clientY - bounds.top;
-
-    if (event.type !== "touchend" && (x < 0 || x > canvas.width || y < 0 || y > canvas.height)) {
-        return;
-    }
-
-    switch (event.type) {
-        case "touchstart":
-            input.touch_down = true;
-            input.touch_change = true;
-            break;
-        case "touchend":
-            input.touch_down = false;
-            input.touch_change = true;
-            break;
-        case "touchmove":
-            break;
-    }
-
-
-    input.touch = {x:x,y:y}
-    
-}
-
-addEventListener("touchstart", handdleTouchEvent, { passive: false })
-
-addEventListener("touchmove", handdleTouchEvent, { passive: false })
-
-addEventListener("touchend",handdleTouchEvent, { passive: false })
-
 const input = {
-    touch:{
-        x:0,
-        y:0,
+    pointer: {
+        x: 0,
+        y: 0,
     },
-    touch_down:false,
-    touch_change : false,
-
-}
+    pointer_down: false,
+    pointer_change: false,
+};
 
 function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
 }
 
-const platforms = [
-    { x: 0, y: canvas.height - 20, w: canvas.width, h: 20 },
+let platforms = [
+    { x: canvas.width / 2 - 50, y: canvas.height - 20, w: 100, h: 14 },
     { x: 40, y: canvas.height - 120, w: 120, h: 14 },
     { x: 220, y: canvas.height - 190, w: 130, h: 14 },
     { x: 90, y: canvas.height - 280, w: 120, h: 14 },
@@ -150,20 +47,68 @@ const platforms = [
 const initialPlatformState = platforms.map(platform => ({ ...platform }));
 
 let cameraOffsetY = 0;
+let difficulty = 0;
+
+function handlePointerEvent(event) {
+    event.preventDefault();
+
+    const bounds = canvas.getBoundingClientRect();
+    const x = event.clientX - bounds.left;
+    const y = event.clientY - bounds.top;
+
+    if (event.type !== 'pointerup' && event.type !== 'pointercancel' && (x < 0 || x > canvas.width || y < 0 || y > canvas.height)) {
+        return;
+    }
+
+    switch (event.type) {
+        case 'pointerdown':
+            input.pointer_down = true;
+            input.pointer_change = true;
+            canvas.setPointerCapture(event.pointerId);
+            break;
+        case 'pointerup':
+            input.pointer_down = false;
+            input.pointer_change = true;
+            canvas.releasePointerCapture(event.pointerId);
+            break;
+        case 'pointercancel':
+            input.pointer_down = false;
+            input.pointer_change = true;
+            canvas.releasePointerCapture(event.pointerId);
+            break;
+        case 'pointermove':
+            break;
+    }
+
+    input.pointer = { x, y };
+}
+
+canvas.style.touchAction = 'none';
+canvas.addEventListener('pointerdown', handlePointerEvent, { passive: false });
+canvas.addEventListener('pointermove', handlePointerEvent, { passive: false });
+canvas.addEventListener('pointerup', handlePointerEvent, { passive: false });
+canvas.addEventListener('pointercancel', handlePointerEvent, { passive: false });
+
+function resetPlatforms() {
+    for (let i = 0; i < platforms.length; i++) {
+        platforms[i].x = Math.random() * (canvas.width - platforms[i].w);
+        platforms[i].y = canvas.height - 20 - i * (canvas.height / platforms.length);
+    }
+    platforms[0].x = canvas.width / 2 - platforms[0].w / 2;
+}
 
 function initGame() {
     cameraOffsetY = 0;
 
-    input.touch.x = 0;
-    input.touch.y = 0;
-    input.touch_down = false;
-    input.touch_change = false;
+    input.pointer.x = 0;
+    input.pointer.y = 0;
+    input.pointer_down = false;
+    input.pointer_change = false;
 
-    for (let i = 0; i < platforms.length; i++) {
-        Object.assign(platforms[i], initialPlatformState[i]);
-    }
+    platforms = initialPlatformState.map(platform => ({ ...platform }));
+    resetPlatforms();
 
-    player.x = 100;
+    player.x = canvas.width / 2 - player.w / 2;
     player.y = canvas.height - 80;
     player.vx = 0;
     player.vy = 0;
@@ -172,47 +117,45 @@ function initGame() {
 }
 
 function updateCamera(player) {
-    const bottomQuarterLine = canvas.height * 0.75;
+    const bottomQuarterLine = canvas.height * 0.60;
     cameraOffsetY = Math.min(cameraOffsetY, player.y - bottomQuarterLine);
 }
 
-function getFuturePos(player, time, gravity, touch) {
+function getFuturePos(player, time, gravity, pointer) {
     const centerX = player.x + player.w / 2;
     const centerY = player.y + player.h / 2;
-    const touchWorldY = touch.y + cameraOffsetY;
-    const aimAngle = Math.atan2(touchWorldY - centerY, touch.x - centerX);
+    const pointerWorldY = pointer.y + cameraOffsetY;
+    const aimAngle = Math.atan2(pointerWorldY - centerY, pointer.x - centerX);
     const launchSpeed = player.charge * player.launch_power;
     const vx = Math.cos(aimAngle) * launchSpeed;
     const vy = Math.sin(aimAngle) * launchSpeed;
 
-
     return {
         x: player.x + vx * time,
-        y: player.y + vy * time  + 0.5 * gravity * (time) * (time)
+        y: player.y + vy * time + 0.5 * gravity * time * time,
     };
-    
 }
 
-function drawFuturePositions(player,steps){
+function drawFuturePositions(player, steps) {
     if (player.charge <= 0) return;
-    for (let i = 0; i < steps; i++) {
-        
-        let futurePos = getFuturePos(player, i, player.g, input.touch);
-        c.beginPath()
+
     c.save();
     c.translate(0, -cameraOffsetY);
-        c.strokeStyle = "rgba(0,0,0,0.5)";
-        c.arc(futurePos.x + player.w/2, futurePos.y + player.h/2,5,0,Math.PI*2,false);
-        c.stroke()
-    c.restore();
+
+    for (let i = 0; i < steps; i++) {
+        const futurePos = getFuturePos(player, i, player.g, input.pointer);
+        c.beginPath();
+        c.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+        c.arc(futurePos.x + player.w / 2, futurePos.y + player.h / 2, 5, 0, Math.PI * 2, false);
+        c.stroke();
         c.closePath();
     }
 
-
+    c.restore();
 }
 
-class Player{
-    constructor(x,y){
+class Player {
+    constructor(x, y) {
         this.x = x;
         this.y = y;
         this.w = 30;
@@ -221,28 +164,21 @@ class Player{
         this.vx = 0;
         this.vy = 0;
         this.on_ground = false;
-        this.friction = 0.9;
+        this.friction = 0.5;
         this.charge = 0;
         this.max_charge = 1;
-        this.charge_rate = 1/ 90;
+        this.charge_rate = 1 / 60;
         this.launch_power = 20;
     }
 
-
-    draw(){
+    draw() {
         c.save();
-        c.fillStyle = this.on_ground ? "red" : "green";
+        c.fillStyle = this.on_ground ? 'red' : 'green';
         c.fillRect(this.x, this.y - cameraOffsetY, this.w, this.h);
         c.restore();
-
-    for (const platform of platforms) {
-        c.fillStyle = "#c9a86a";
-        c.fillRect(platform.x, platform.y - cameraOffsetY, platform.w, platform.h);
-    }
     }
 
-    update(){
-
+    update() {
         const wasOnGround = this.on_ground;
         const previousY = this.y;
 
@@ -269,30 +205,27 @@ class Player{
                 break;
             }
 
-            if( platform.y + cameraOffsetY > canvas.height){
-                console.log("repositioning platform")
-                platform.y = canvas.height - cameraOffsetY + 20;
-                plafrom.x = Math.random() * (canvas.width - platform.w);
+            if (platform.y - cameraOffsetY > canvas.height + 30) {
+                platform.y = cameraOffsetY - platform.h - 30 + (Math.random() * 100 - 50);
+                platform.x = Math.random() * (canvas.width - platform.w);
             }
-
-                console.log(platform.y + cameraOffsetY)
         }
 
-        if (!this.on_ground && nextY > previousY && nextY + this.h >= canvas.height) {
+        if (!this.on_ground && nextY > previousY && nextY + this.h > canvas.height + 1) {
             nextY = canvas.height - this.h;
             this.vy = 0;
             this.on_ground = true;
         }
 
-        if (this.on_ground && input.touch_down) {
+        if (this.on_ground && input.pointer_down) {
             this.charge = clamp(this.charge + this.charge_rate, 0, this.max_charge);
         }
 
-        if (this.on_ground && !input.touch_down && input.touch_change && this.charge > 0) {
+        if (this.on_ground && !input.pointer_down && input.pointer_change && this.charge > 0) {
             const centerX = this.x + this.w / 2;
             const centerY = this.y + this.h / 2;
-            const aimX = input.touch.x - centerX;
-            const aimY = (input.touch.y + cameraOffsetY) - centerY;
+            const aimX = input.pointer.x - centerX;
+            const aimY = input.pointer.y + cameraOffsetY - centerY;
             const aimAngle = Math.atan2(aimY, aimX);
             const launchSpeed = this.charge * this.launch_power;
 
@@ -305,25 +238,24 @@ class Player{
             this.on_ground = false;
         }
 
-
         this.x = nextX;
         this.y = nextY;
 
-        this.vx *= this.on_ground ? this.friction: 1
-        this.vy *= 0.99
+        this.vx *= this.on_ground ? this.friction : 1;
+        this.vy *= 0.99;
 
+        this.x = clamp(this.x, 0, canvas.width - this.w);
     }
-
 }
 
-const player = new Player(100, canvas.height - 80);
+const player = new Player(canvas.width / 2 - 15, canvas.height - 80);
 
 initGame();
 
 function drawGame() {
-    requestAnimationFrame(drawGame)
-    
-    if (!document.getElementById("game").classList.contains('active')) {
+    requestAnimationFrame(drawGame);
+
+    if (!document.getElementById('game').classList.contains('active')) {
         return;
     }
 
@@ -332,12 +264,15 @@ function drawGame() {
 
     updateCamera(player);
 
+    for (const platform of platforms) {
+        c.fillStyle = '#c9a86a';
+        c.fillRect(platform.x, platform.y - cameraOffsetY, platform.w, platform.h);
+    }
 
-
-    c.beginPath()
-    c.strokeStyle = input.touch_down ? "red" : "blue";
-    c.arc(input.touch.x, input.touch.y,20,0,Math.PI*2,false);
-    c.stroke()
+    c.beginPath();
+    c.strokeStyle = input.pointer_down ? 'red' : 'blue';
+    c.arc(input.pointer.x, input.pointer.y, 20, 0, Math.PI * 2, false);
+    c.stroke();
     c.closePath();
 
     const meterX = 20;
@@ -346,28 +281,35 @@ function drawGame() {
     const meterHeight = 10;
     const meterFill = player.charge / player.max_charge;
 
-    c.fillStyle = "rgba(0, 0, 0, 0.15)";
+    c.fillStyle = 'rgba(0, 0, 0, 0.15)';
     c.fillRect(meterX, meterY, meterWidth, meterHeight);
-    c.fillStyle = input.touch_down ? "#ff6b6b" : "#FFD700";
+    c.fillStyle = input.pointer_down ? '#ff6b6b' : '#FFD700';
     c.fillRect(meterX, meterY, meterWidth * meterFill, meterHeight);
-    c.strokeStyle = "rgba(0, 0, 0, 0.2)";
+    c.strokeStyle = 'rgba(0, 0, 0, 0.2)';
     c.strokeRect(meterX, meterY, meterWidth, meterHeight);
 
-
-        
-    
     player.draw();
     player.update();
 
-    drawFuturePositions(player,20);
+    drawFuturePositions(player, 20);
 
-
-    // Draw border
     c.strokeStyle = '#ddd';
     c.lineWidth = 2;
     c.strokeRect(0, 0, canvas.width, canvas.height);
 
-    input.touch_change = false;
+    input.pointer_change = false;
+
+    if (player.y - cameraOffsetY > canvas.height) {
+        initGame();
+    }
+
+    difficulty = -(player.y - canvas.height)/canvas.height;
+    c.save();
+    c.font = '16px Arial';
+
+    cameraOffsetY -= difficulty * 0.1;
+    console.log(platforms.length);
+    
 }
 
 drawGame();
