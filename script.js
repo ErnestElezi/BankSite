@@ -43,11 +43,11 @@ function clamp(value, min, max) {
 
 let platforms = [
     { x: canvas.width / 2 - 50, y: canvas.height - 20, w: 100, h: 14 },
-    { x: 40, y: canvas.height - 120, w: 120, h: 14 },
-    { x: 220, y: canvas.height - 190, w: 130, h: 14 },
-    { x: 90, y: canvas.height - 280, w: 120, h: 14 },
-    { x: 240, y: canvas.height - 380, w: 140, h: 14 },
-    { x: 60, y: canvas.height - 470, w: 110, h: 14 },
+    { x: 40, y: canvas.height - 120, w: 100, h: 14 },
+    { x: 220, y: canvas.height - 190, w: 100, h: 14 },
+    { x: 90, y: canvas.height - 280, w: 100, h: 14 },
+    { x: 240, y: canvas.height - 380, w: 100, h: 14 },
+    { x: 60, y: canvas.height - 470, w: 100, h: 14 },
 ];
 
 const initialPlatformState = platforms.map(platform => ({ ...platform }));
@@ -187,8 +187,9 @@ class Player {
     update() {
         const wasOnGround = this.on_ground;
         const previousY = this.y;
+        const groundSnapDistance = 3;
 
-        this.on_ground = false;
+        let nextOnGround = false;
 
         if (!wasOnGround) {
             this.vy += this.g;
@@ -202,32 +203,32 @@ class Player {
         for (const platform of platforms) {
             const movingDown = this.vy >= 0;
             const horizontallyOverlapping = nextX + this.w > platform.x && nextX < platform.x + platform.w;
-            const crossedTop = previousY + this.h <= platform.y && nextY + this.h >= platform.y;
+            const crossedTop = previousY + this.h <= platform.y + groundSnapDistance && nextY + this.h >= platform.y - groundSnapDistance;
 
             if (movingDown && horizontallyOverlapping && crossedTop) {
                 nextY = platform.y - this.h;
                 this.vy = 0;
-                this.on_ground = true;
+                nextOnGround = true;
                 break;
             }
 
             if (platform.y - cameraOffsetY > canvas.height + 30) {
-                platform.y = cameraOffsetY - platform.h - 30 + (Math.random() * 100 - 50);
+                platform.y = cameraOffsetY - platform.h - 30 + (Math.random() * 10 - 5);
                 platform.x = Math.random() * (canvas.width - platform.w);
             }
         }
 
-        if (!this.on_ground && nextY > previousY && nextY + this.h > canvas.height + 1) {
+        if (!nextOnGround && nextY > previousY && nextY + this.h > canvas.height + 1) {
             nextY = canvas.height - this.h;
             this.vy = 0;
-            this.on_ground = true;
+            nextOnGround = true;
         }
 
-        if (this.on_ground && input.pointer_down) {
+        if (nextOnGround && input.pointer_down) {
             this.charge = clamp(this.charge + this.charge_rate, 0, this.max_charge);
         }
 
-        if (this.on_ground && !input.pointer_down && input.pointer_change && this.charge > 0) {
+        if (nextOnGround && !input.pointer_down && input.pointer_change && this.charge > 0) {
             const centerX = this.x + this.w / 2;
             const centerY = this.y + this.h / 2;
             const aimX = input.pointer.x - centerX;
@@ -235,17 +236,18 @@ class Player {
             const aimAngle = Math.atan2(aimY, aimX);
             const launchSpeed = this.charge * this.launch_power;
 
-            this.vx = Math.cos(aimAngle) * launchSpeed;
+            this.vx = Math.cos(aimAngle) * launchSpeed * 0.6;
             this.vy = Math.sin(aimAngle) * launchSpeed;
             this.charge = 0;
 
             nextX = this.x + this.vx;
             nextY = this.y + this.vy;
-            this.on_ground = false;
+            nextOnGround = false;
         }
 
         this.x = nextX;
         this.y = nextY;
+        this.on_ground = nextOnGround;
 
         this.vx *= this.on_ground ? this.friction : 1;
         this.vy *= 0.99;
@@ -270,9 +272,12 @@ function drawGame() {
 
     updateCamera(player);
 
-    for (const platform of platforms) {
-        c.fillStyle = '#c9a86a';
+    for (let i = 0; i < platforms.length; i++) {
+        let platform = platforms[i];
+        c.fillStyle = `rgba(${i * 50},100,100,1)`;
+        c.strokeStyle = "#000000"
         c.fillRect(platform.x, platform.y - cameraOffsetY, platform.w, platform.h);
+        c.strokeRect(platform.x, platform.y - cameraOffsetY, platform.w, platform.h);
     }
 
     c.beginPath();
