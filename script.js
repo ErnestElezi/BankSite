@@ -18,6 +18,12 @@ function showPage(pageId, navItem) {
     }
 }
 
+document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('pointerup', function() {
+        showPage(this.dataset.page, this);
+    });
+});
+
 // Simple Game Canvas
 const canvas = document.getElementById('gameCanvas');
 const c = canvas.getContext('2d');
