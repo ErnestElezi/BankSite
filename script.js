@@ -24,6 +24,26 @@ document.querySelectorAll('.nav-item').forEach(item => {
     });
 });
 
+document.querySelectorAll('.quest-panel').forEach(panel => {
+    panel.addEventListener('click', function(event) {
+        if (event.target.classList.contains('step-checkbox')) {
+            event.stopPropagation();
+            return;
+        }
+
+        const questSteps = this.querySelector('.quest-steps');
+        const isExpanded = this.classList.contains('expanded');
+
+        if (isExpanded) {
+            questSteps.style.display = 'none';
+            this.classList.remove('expanded');
+        } else {
+            questSteps.style.display = 'flex';
+            this.classList.add('expanded');
+        }
+    });
+});
+
 // Simple Game Canvas
 const canvas = document.getElementById('gameCanvas');
 const c = canvas.getContext('2d');
