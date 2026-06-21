@@ -47,6 +47,9 @@ document.querySelectorAll('.quest-panel').forEach(panel => {
 // Simple Game Canvas
 const canvas = document.getElementById('gameCanvas');
 const c = canvas.getContext('2d');
+const backgroundGradient = c.createLinearGradient(0, 0, 0, canvas.height);
+backgroundGradient.addColorStop(0, '#1d4ed8');
+backgroundGradient.addColorStop(1, '#93c5fd');
 
 c.ImageSmoothingEnabled = false;
 
@@ -75,6 +78,7 @@ function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
 }
 let spikeList = [];
+let enemy;
 
 
 let platforms = [
@@ -139,6 +143,12 @@ function resetPlatforms() {
     platforms[0].x = canvas.width / 2 - platforms[0].w / 2;
 }
 
+function distance(pos0, pos1) {
+    const dx = pos1.x - pos0.x;
+    const dy = pos1.y - pos0.y;
+    return Math.sqrt(dx * dx + dy * dy);
+}
+
 function initGame() {
     cameraOffsetY = 0;
 
@@ -157,6 +167,14 @@ function initGame() {
         w: 30,
         h: 30,
     });
+
+    enemy = {
+        x: platforms[5].x + platforms[5].w / 2 - 30,
+        y: platforms[5].y - 60,
+        w: 60,
+        h: 60,
+    };
+
 
     player.x = canvas.width / 2 - player.w / 2;
     player.y = canvas.height - 80;
@@ -326,7 +344,7 @@ function drawGame() {
         return;
     }
 
-    c.fillStyle = '#c2f4f4';
+    c.fillStyle = backgroundGradient;
     c.fillRect(0, 0, canvas.width, canvas.height);
 
     updateCamera(player);
@@ -364,6 +382,32 @@ function drawGame() {
         });
     }
 
+
+    c.drawImage(enemySpriteSheet, 0, 0, 32, 32, enemy.x, enemy.y - cameraOffsetY, enemy.w, enemy.h);
+
+    let playerDistance = distance({x: player.x + player.w/2, y: player.y + player.h/2}, {x: enemy.x + enemy.w/2, y: enemy.y + enemy.h/2});
+
+    if (playerDistance > 40 && playerDistance < 80) {
+        c.strokeStyle = playerDistance < 60 ? 'red' : 'yellow';
+        c.beginPath();
+        c.lineWidth = 2;
+        c.arc(enemy.x + enemy.w/2, enemy.y - cameraOffsetY + enemy.h/2, playerDistance, 0, Math.PI * 2);
+        c.stroke();
+        c.closePath();
+        if (playerDistance < 60 && !player.on_ground && input.pointer_down && input.pointer_change) {
+            enemy.x = platforms[Math.floor(platforms.length * Math.random())].x + platforms[Math.floor(platforms.length * Math.random())].w / 2 - 30;
+            enemy.y = platforms[Math.floor(platforms.length * Math.random())].y - 60;
+        }
+    }
+
+    if(playerDistance < 40) {
+        initGame();
+    }
+
+    if (enemy.y - cameraOffsetY > canvas.height + 30) {
+        enemy.y = cameraOffsetY - enemy.h - 30 + (Math.random() * 10 - 5);
+        enemy.x = Math.random() * (canvas.width - enemy.w);
+    }
 
 
 
