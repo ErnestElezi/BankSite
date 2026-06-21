@@ -54,16 +54,16 @@ backgroundGradient.addColorStop(1, '#93c5fd');
 c.ImageSmoothingEnabled = false;
 
 const playerSpriteSheet = new Image();
-playerSpriteSheet.src = '/Icons/GameAssets/player_spritesheet.png';
+playerSpriteSheet.src = 'player_spritesheet.png';
 
 const spikeSpriteSheet = new Image();
-spikeSpriteSheet.src = '/Icons/GameAssets/Spike.png';
+spikeSpriteSheet.src = 'Spike.png';
 
 const platformSpriteSheet = new Image();
-platformSpriteSheet.src = '/Icons/GameAssets/Platform.png';
+platformSpriteSheet.src = 'Platform.png';
 
 const enemySpriteSheet = new Image();
-enemySpriteSheet.src = '/Icons/GameAssets/Enemy.png';
+enemySpriteSheet.src = 'Enemy.png';
 
 const input = {
     pointer: {
