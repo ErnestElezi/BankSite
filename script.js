@@ -188,6 +188,7 @@ function distance(pos0, pos1) {
 function initGame() {
     gameOver = false;
     gameOverOverlay.classList.remove('active');
+    gameOverOverlay.hidden = true;
     gameOverOverlay.setAttribute('aria-hidden', 'true');
 
     cameraOffsetY = 0;
@@ -249,6 +250,7 @@ function endGame() {
     }
 
     gameOver = true;
+    gameOverOverlay.hidden = false;
     gameOverOverlay.classList.add('active');
     gameOverOverlay.setAttribute('aria-hidden', 'false');
 }
