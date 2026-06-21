@@ -23,7 +23,7 @@
         <!-- Content Area -->
         <div class="content">
             <!-- Home Page -->
-            <div class="page" id="home">
+            <div class="page active" id="home">
                 <div class="card">
                     <div class="card-label">YOUR CARD</div>
                     <div class="card-number">•••• •••• •••• 4829</div>
@@ -444,14 +444,23 @@
             </div>
 
             <!-- Game Page -->
-            <div class="page active" id="game">
+            <div class="page" id="game">
                 <div class="game-header">
                     <div class="game-credits">
                         <span>Game Credits:</span>
                         <span class="credits-amount">5,000</span>
                     </div>
                 </div>
-                <canvas id="gameCanvas" class="game-canvas" width="440" height="550"></canvas>
+                <div class="game-stage">
+                    <canvas id="gameCanvas" class="game-canvas" width="440" height="550"></canvas>
+                    <div class="game-over-overlay" id="gameOverOverlay" aria-hidden="true">
+                        <div class="game-over-card">
+                            <div class="game-over-title">Game Over</div>
+                            <p>You lost your run. Tap restart to try again.</p>
+                            <button class="btn game-restart-btn" id="restartGameBtn" type="button">Restart</button>
+                        </div>
+                    </div>
+                </div>
                 <p class="game-instructions">Tap and hold anywhere on the screen to charge, then release to launch your player upward.</p>
                 <p class="game-instructions">Spikes end the game but the enemy can be defeated by clicking while the circle is red.</p>
             </div>

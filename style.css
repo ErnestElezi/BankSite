@@ -477,6 +477,11 @@ input:focus, select:focus {
     accent-color: #FFD700;
 }
 
+.step-checkbox:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
 /* Redeem */
 .redeem-list {
     display: flex;
@@ -529,7 +534,8 @@ input:focus, select:focus {
     justify-content: center;
     top: 10px;
     right: 10px;
-    z-index: 0;
+    z-index: 3;
+    pointer-events: none;
 }
 
 .game-credits {
@@ -541,6 +547,8 @@ input:focus, select:focus {
     border-radius: 8px;
     color: #000;
     font-size: 11px;
+    z-index: 3;
+    pointer-events: none;
 }
 
 .credits-amount {
@@ -559,6 +567,53 @@ input:focus, select:focus {
     image-rendering: pixelated;
 }
 
+.game-stage {
+    position: relative;
+}
+
+.game-over-overlay {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(8, 15, 30, 0.72);
+    border-radius: 12px;
+    backdrop-filter: blur(6px);
+}
+
+.game-over-overlay.active {
+    display: flex;
+}
+
+.game-over-card {
+    width: min(100%, 320px);
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 20px;
+    padding: 28px 22px;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+}
+
+.game-over-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: #111827;
+    margin-bottom: 10px;
+}
+
+.game-over-card p {
+    font-size: 14px;
+    color: #4b5563;
+    line-height: 1.5;
+    margin-bottom: 18px;
+}
+
+.game-restart-btn {
+    width: 100%;
+}
+
 .game-instructions {
     margin-top: 10px;
     text-align: center;
@@ -570,4 +625,15 @@ input:focus, select:focus {
 #game {
     padding: 10px;
     position: relative;
+}
+
+@media (max-width: 480px) {
+    .game-stage {
+        margin-inline: -10px;
+    }
+
+    .game-canvas,
+    .game-over-overlay {
+        border-radius: 0;
+    }
 }

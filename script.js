@@ -44,9 +44,16 @@ document.querySelectorAll('.quest-panel').forEach(panel => {
     });
 });
 
+document.querySelectorAll('.step-checkbox').forEach(checkbox => {
+    checkbox.disabled = true;
+});
+
 // Simple Game Canvas
 const canvas = document.getElementById('gameCanvas');
 const c = canvas.getContext('2d');
+const gameOverOverlay = document.getElementById('gameOverOverlay');
+const restartGameBtn = document.getElementById('restartGameBtn');
+const gameCreditsAmount = document.querySelector('.game-credits .credits-amount');
 const backgroundGradient = c.createLinearGradient(0, 0, 0, canvas.height);
 backgroundGradient.addColorStop(0, '#1d4ed8');
 backgroundGradient.addColorStop(1, '#93c5fd');
@@ -116,6 +123,13 @@ const initialPlatformState = platforms.map(platform => ({ ...platform }));
 
 let cameraOffsetY = 0;
 let difficulty = 0;
+let gameOver = false;
+let gameCredits = 5000;
+let nextCreditMilestone = canvas.height * 4;
+
+function updateGameCreditsDisplay() {
+    gameCreditsAmount.textContent = gameCredits.toLocaleString();
+}
 
 function handlePointerEvent(event) {
     event.preventDefault();
@@ -172,6 +186,10 @@ function distance(pos0, pos1) {
 }
 
 function initGame() {
+    gameOver = false;
+    gameOverOverlay.classList.remove('active');
+    gameOverOverlay.setAttribute('aria-hidden', 'true');
+
     cameraOffsetY = 0;
 
     input.pointer.x = 0;
@@ -220,6 +238,35 @@ function initGame() {
     player.vy = 0;
     player.on_ground = false;
     player.charge = 0;
+    playerStartY = player.y;
+
+    nextCreditMilestone = canvas.height * 4;
+}
+
+function endGame() {
+    if (gameOver) {
+        return;
+    }
+
+    gameOver = true;
+    gameOverOverlay.classList.add('active');
+    gameOverOverlay.setAttribute('aria-hidden', 'false');
+}
+
+restartGameBtn.addEventListener('pointerup', function() {
+    initGame();
+});
+
+updateGameCreditsDisplay();
+
+function awardClimbCredits() {
+    const climbDistance = Math.max(0, playerStartY - player.y);
+
+    while (climbDistance >= nextCreditMilestone) {
+        gameCredits += 15;
+        nextCreditMilestone += canvas.height * 4;
+        updateGameCreditsDisplay();
+    }
 }
 
 function updateCamera(player) {
@@ -372,6 +419,7 @@ class Player {
 }
 
 const player = new Player(canvas.width / 2 - 15, canvas.height - 80);
+let playerStartY = player.y;
 
 initGame();
 
@@ -379,6 +427,10 @@ function drawGame() {
     requestAnimationFrame(drawGame);
 
     if (!document.getElementById('game').classList.contains('active')) {
+        return;
+    }
+
+    if (gameOver) {
         return;
     }
 
@@ -427,7 +479,7 @@ function drawGame() {
 
     if (player.x + player.w > spike.x && player.x < spike.x + spike.w &&
         player.y + player.h > spike.y && player.y < spike.y + spike.h) {
-        initGame();
+        endGame();
     }
     }
 
@@ -467,7 +519,7 @@ function drawGame() {
     }
 
     if(playerDistance < 40) {
-        initGame();
+        endGame();
     }
 
     if (enemy.y - cameraOffsetY > canvas.height + 30) {
@@ -477,11 +529,6 @@ function drawGame() {
 
 
 
-    c.beginPath();
-    c.strokeStyle = input.pointer_down ? 'red' : 'blue';
-    c.arc(input.pointer.x, input.pointer.y, 20, 0, Math.PI * 2, false);
-    c.stroke();
-    c.closePath();
 
     const meterX = 20;
     const meterY = 20;
@@ -499,6 +546,8 @@ function drawGame() {
     player.draw();
     player.update();
 
+    awardClimbCredits();
+
     drawFuturePositions(player, 20);
 
     c.strokeStyle = '#ddd';
@@ -508,7 +557,7 @@ function drawGame() {
     input.pointer_change = false;
 
     if (player.y - cameraOffsetY > canvas.height) {
-        initGame();
+        endGame();
     }
 
     difficulty = -(player.y - canvas.height)/canvas.height;
