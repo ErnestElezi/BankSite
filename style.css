@@ -559,6 +559,14 @@ input:focus, select:focus {
     image-rendering: pixelated;
 }
 
+.game-instructions {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+    line-height: 1.4;
+}
+
 #game {
     padding: 10px;
     position: relative;

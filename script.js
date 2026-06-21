@@ -65,6 +65,12 @@ platformSpriteSheet.src = 'Platform.png';
 const enemySpriteSheet = new Image();
 enemySpriteSheet.src = 'Enemy.png';
 
+const cloudASprite = new Image();
+cloudASprite.src = 'CloudA.png';
+
+const cloudBSprite = new Image();
+cloudBSprite.src = 'CloudB.png';
+
 const input = {
     pointer: {
         x: 0,
@@ -79,6 +85,22 @@ function clamp(value, min, max) {
 }
 let spikeList = [];
 let enemy;
+
+let cloudA = {
+    x: 50,
+    y: 50,
+    w: 64,
+    h: 64,
+    speed: 0.2,
+};
+
+let cloudB = {
+    x: 200,
+    y: 80,
+    w: 64,
+    h: 64,
+    speed: 0.1,
+}; 
 
 
 let platforms = [
@@ -174,6 +196,22 @@ function initGame() {
         w: 60,
         h: 60,
     };
+
+ cloudA = {
+    x: 50,
+    y: 50,
+    w: 64 + 20,
+    h: 64 + 20,
+    speed: 0.2,
+};
+
+ cloudB = {
+    x: 200,
+    y: 80,
+    w: 64 + 50,
+    h: 64 + 50,
+    speed: 0.1,
+}; 
 
 
     player.x = canvas.width / 2 - player.w / 2;
@@ -349,6 +387,30 @@ function drawGame() {
 
     updateCamera(player);
 
+    c.drawImage(cloudASprite, cloudA.x, cloudA.y - cameraOffsetY * 0.5, cloudA.w, cloudA.h);
+    c.drawImage(cloudBSprite, cloudB.x, cloudB.y - cameraOffsetY * 0.25, cloudB.w, cloudB.h);
+
+    cloudA.x += cloudA.speed;
+    cloudB.x += cloudB.speed;
+
+    if (cloudA.x > canvas.width) {
+        cloudA.x = -cloudA.w;
+        cloudA.y = Math.random() * 100 + 20;
+    }
+
+    if (cloudB.x > canvas.width) {
+        cloudB.x = -cloudB.w;
+        cloudB.y = Math.random() * 100 + 20;
+    }
+
+    if ((cloudA.y - cameraOffsetY) * 0.5 > canvas.height + cloudA.h + 30) {
+        cloudA.y = cameraOffsetY - cloudA.h - 30 + (Math.random() * 10 - 5);
+    }
+
+    if ((cloudB.y - cameraOffsetY) * 0.25 > canvas.height + cloudB.h + 30) {
+        cloudB.y = cameraOffsetY - cloudB.h - 30 + (Math.random() * 10 - 5);
+    }
+
     for (let i = 0; i < platforms.length; i++) {
         let platform = platforms[i];
         c.drawImage(platformSpriteSheet, 0, 0, 128, 32, platform.x, platform.y - cameraOffsetY, platform.w, platform.h);
@@ -388,15 +450,19 @@ function drawGame() {
     let playerDistance = distance({x: player.x + player.w/2, y: player.y + player.h/2}, {x: enemy.x + enemy.w/2, y: enemy.y + enemy.h/2});
 
     if (playerDistance > 40 && playerDistance < 80) {
-        c.strokeStyle = playerDistance < 60 ? 'red' : 'yellow';
+        c.strokeStyle = playerDistance < 70 ? 'red' : 'yellow';
         c.beginPath();
         c.lineWidth = 2;
         c.arc(enemy.x + enemy.w/2, enemy.y - cameraOffsetY + enemy.h/2, playerDistance, 0, Math.PI * 2);
         c.stroke();
         c.closePath();
-        if (playerDistance < 60 && !player.on_ground && input.pointer_down && input.pointer_change) {
-            enemy.x = platforms[Math.floor(platforms.length * Math.random())].x + platforms[Math.floor(platforms.length * Math.random())].w / 2 - 30;
-            enemy.y = platforms[Math.floor(platforms.length * Math.random())].y - 60;
+        if (playerDistance < 70 && !player.on_ground && input.pointer_down && input.pointer_change) {
+            let targetPlatform = platforms[Math.floor(platforms.length * Math.random())];
+            player.x = enemy.x;
+            player.y = enemy.y;
+            enemy.x = targetPlatform.x + targetPlatform.w/2 - enemy.w/2;
+            enemy.y = targetPlatform.y - enemy.h;
+
         }
     }
 
