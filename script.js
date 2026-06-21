@@ -48,6 +48,20 @@ document.querySelectorAll('.quest-panel').forEach(panel => {
 const canvas = document.getElementById('gameCanvas');
 const c = canvas.getContext('2d');
 
+c.ImageSmoothingEnabled = false;
+
+const playerSpriteSheet = new Image();
+playerSpriteSheet.src = '/Icons/GameAssets/player_spritesheet.png';
+
+const spikeSpriteSheet = new Image();
+spikeSpriteSheet.src = '/Icons/GameAssets/Spike.png';
+
+const platformSpriteSheet = new Image();
+platformSpriteSheet.src = '/Icons/GameAssets/Platform.png';
+
+const enemySpriteSheet = new Image();
+enemySpriteSheet.src = '/Icons/GameAssets/Enemy.png';
+
 const input = {
     pointer: {
         x: 0,
@@ -64,12 +78,12 @@ let spikeList = [];
 
 
 let platforms = [
-    { x: canvas.width / 2 - 50, y: canvas.height - 20, w: 100, h: 14 },
-    { x: 40, y: canvas.height - 120, w: 100, h: 14 },
-    { x: 220, y: canvas.height - 190, w: 100, h: 14 },
-    { x: 90, y: canvas.height - 280, w: 100, h: 14 },
-    { x: 240, y: canvas.height - 380, w: 100, h: 14 },
-    { x: 60, y: canvas.height - 470, w: 100, h: 14 },
+    { x: canvas.width / 2 - 50, y: canvas.height - 20, w: 128, h: 32 },
+    { x: 40, y: canvas.height - 120, w: 128, h: 32 },
+    { x: 220, y: canvas.height - 190, w: 128, h: 32 },
+    { x: 90, y: canvas.height - 280, w: 128, h: 32 },
+    { x: 240, y: canvas.height - 380, w: 128, h: 32 },
+    { x: 60, y: canvas.height - 470, w: 128, h: 32 },
 ];
 
 const initialPlatformState = platforms.map(platform => ({ ...platform }));
@@ -194,8 +208,8 @@ class Player {
     constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.w = 30;
-        this.h = 60;
+        this.w = 50;
+        this.h = 50;
         this.g = 0.5;
         this.vx = 0;
         this.vy = 0;
@@ -205,16 +219,31 @@ class Player {
         this.max_charge = 1;
         this.charge_rate = 1 / 60;
         this.launch_power = 20;
+        this.frame = 0;
     }
 
     draw() {
+        let offsetX = (Math.floor(this.frame/20) % 2) * 32;
         c.save();
-        c.fillStyle = this.on_ground ? 'red' : 'green';
-        c.fillRect(this.x, this.y - cameraOffsetY, this.w, this.h);
+        c.translate(this.x, this.y - cameraOffsetY);
+        if (this.vx < 0) {
+            c.scale(-1, 1);
+            c.translate(-this.w, 0);
+        }
+        if (this.on_ground) {
+        c.drawImage(playerSpriteSheet, offsetX, 0, 32, 32, 0, 0, this.w, this.h);
+        } else {
+            if (this.vy > 0) {
+                c.drawImage(playerSpriteSheet, 96, 0, 32, 32, 0, 0, this.w, this.h);
+            } else {
+                c.drawImage(playerSpriteSheet, 64, 0, 32, 32, 0, 0, this.w, this.h);
+            }
+        }
         c.restore();
     }
 
     update() {
+        this.frame++;
         const wasOnGround = this.on_ground;
         const previousY = this.y;
         const groundSnapDistance = 3;
@@ -297,27 +326,19 @@ function drawGame() {
         return;
     }
 
-    c.fillStyle = '#f9f9f9';
+    c.fillStyle = '#c2f4f4';
     c.fillRect(0, 0, canvas.width, canvas.height);
 
     updateCamera(player);
 
     for (let i = 0; i < platforms.length; i++) {
         let platform = platforms[i];
-        c.fillStyle = `rgba(${i * 50},100,100,1)`;
-        c.strokeStyle = "#000000"
-        c.fillRect(platform.x, platform.y - cameraOffsetY, platform.w, platform.h);
-        c.strokeRect(platform.x, platform.y - cameraOffsetY, platform.w, platform.h);
+        c.drawImage(platformSpriteSheet, 0, 0, 128, 32, platform.x, platform.y - cameraOffsetY, platform.w, platform.h);
     }
 
     for (let spike of spikeList) {
 
-        c.beginPath();
-        c.fillStyle = 'black';
-        c.fillRect(spike.x, spike.y - cameraOffsetY, spike.w, spike.h);
-        c.strokeStyle = 'black';
-        c.strokeRect(spike.x, spike.y - cameraOffsetY, spike.w, spike.h);
-        c.closePath();
+        c.drawImage(spikeSpriteSheet, 0, 0, 22, 22, spike.x-2, spike.y - cameraOffsetY-2, spike.w+4, spike.h+4);
 
         if (spike.y - cameraOffsetY > canvas.height + 30) {
             spike.y = cameraOffsetY - spike.h - 30 + (Math.random() * 10 - 5);
@@ -331,8 +352,8 @@ function drawGame() {
     }
 
     let spikeDifficoultyThreshold = -Math.floor((player.y - canvas.height) / (canvas.height*2))/5;
-    c.fillStyle = 'rgba(0,0,0,0.5)';
-    c.fillText(`Difficulty: ${spikeDifficoultyThreshold}`, 20, 60);
+    // c.fillStyle = 'rgba(0,0,0,0.5)';
+    // c.fillText(`Difficulty: ${spikeDifficoultyThreshold}`, 20, 60);
 
     if (spikeDifficoultyThreshold > spikeList.length) {
         spikeList.push({
@@ -341,7 +362,6 @@ function drawGame() {
             w: 30,
             h: 30,
         });
-        console.log("Added spike, total: " + spikeList.length);
     }
 
 
